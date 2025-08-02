@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import "./IOTypes.sol";
 import "./BaseEscrowFactory.sol";
 import "../lib/openzeppelin-contracts/contracts/token/ERC20/ERC20.sol";
-
+import "./AddressConverter.sol";
 
 contract EscrowFactory is BaseEscrowFactory{
     using IOTypes for *;
@@ -17,39 +17,42 @@ contract EscrowFactory is BaseEscrowFactory{
         BaseEscrowFactory(_owner, _privateTime, _publicTime, _expiryTime, _securityDeposit){}
 
 
+
+
     function deploySourceEscrow(IOTypes.Order calldata order, bytes calldata signature) external payable {
         // Make sure that taker is paying security deposit
-        require(msg.value >= this.security_deposit, "Security deposit not enough");
+        require(msg.value >= security_deposit, "Security deposit not enough");
 
         // Check signature to confirm that order is coming from the maker
         bytes32 orderHash = keccak256(abi.encode(order));
         address signer = recoverSigner(orderHash, signature);
-        require(signer == address(order.maker), "Invalid signature");
+        address makerAddress = address(uint160(uint256(order.maker)));
+        require(signer == AddressConverter.bytes32ToAddress(order.maker), "Invalid signature");
 
         // Make sure that the maker already approved the source token amount
-        bool success = IERC20(order.sourceToken).transferFrom(address(order.maker), address(this), order.sourceTokenAmount);
+        bool success = IERC20(AddressConverter.bytes32ToAddress(order.sourceToken)).transferFrom(AddressConverter.bytes32ToAddress(order.maker), address(this), order.sourceTokenAmount);
         require(success, "Maker must approve tokens to EscrowFactory");
 
         // Save order in memory and create an escrow
         orders[orderHash] = order;
         IOTypes.SourceEscrow memory escrow = IOTypes.SourceEscrow({
-                    taker: order.taker,
+                    taker: AddressConverter.addressToBytes32(msg.sender),
                     fillAmount: order.sourceTokenAmount,
                     status: IOTypes.escrowStatus.CREATED,
                     timelock: order.timelock
         });
         sourceEscrows[orderHash].push(escrow);
 
-        // Announce order complement TODO: How to make sure order is coming from this contract??
-
-        emit SourceEscrowDeployed(orderHash, msg.sender, msg.value);
+        // Announce order complement 
+        // TODO: How to make sure order is coming from this contract??
+        // How to emit event
     }
 
 
 
     function deployDestinationEscrow(IOTypes.OrderComplement calldata orderComplement) external {
         // Make sure that taker is paying security deposit
-        require(msg.value >= this.security_deposit, "Security deposit not enough");
+        require(msg.value >= security_deposit, "Security deposit not enough");
 
         // Make sure orderComplement isn't fudged in between
 
@@ -73,44 +76,34 @@ contract EscrowFactory is BaseEscrowFactory{
         emit DestinationEscrowDeployed(orderComplement.orderId, orderComplement.destinationChainReceiver,orderComplement.amountReceived);
     }
 
-    function withdraw(bytes32 orderId, bool isSource, uint256 index) external {
+
+
+    function withdraw(bytes32 orderId,bytes32 secret) external {
+        IOTypes.SourceEscrow memory escrow= sourceEscrows[orderId];
+
         // Check if the status of escrow of escrow is correct
+        require(escrow.state == IOTypes.escrowStatus.CREATED, "Not Withdrawable");
+
         // Check if hashlock is okay
+        require(escrow.hashlock == keccak256(secret), "Wrong Secret");
+
         // Check who can withdraw at the moment based on timelock
+        bool private_period = escrow.timelock+this.private_withdrawal_time>=block.timestamp;
+        bool public_period = escrow.timelock+this.private_withdrawal_time<block.timestamp;
+        bool taker_withdrawing = msg.sender == escrow.taker;
+        require((private_period&&taker_withdrawing)||(public_period), "Not allowed");
+
+
         // Send to taker or caller depending on time
+        bool success = IERC20(orders[orderId].sourceToken).transfer(escrow.taker, escrow.fillAmount);
+        require(success, "Transfer to taker failed");
 
-        if (isSource) {
-            IOTypes.SourceEscrow storage escrow = sourceEscrows[orderId][index];
-            require(
-                escrow.status == IOTypes.escrowStatus.CREATED ||
-                escrow.status == IOTypes.escrowStatus.EXPIRED,
-                "Not withdrawable"
-            );
-            require(msg.sender == escrow.taker, "Only taker can withdraw");
+        // Send safety deposit to the person who called the transfer function
+        bool success = msg.sender.call{value: this.security_deposit}("");
+        require(success, "Transfer failed");
 
-            IOTypes.Order storage order = orders[orderId];
-            escrow.status = IOTypes.escrowStatus.WITHDRAWN;
-
-            bool success = IERC20(order.sourceToken).transfer(msg.sender, escrow.fillAmount);
-            require(success, "Transfer failed");
-
-            emit SourceEscrowWithdrawn(orderId, msg.sender, escrow.fillAmount);
-        } else {
-            IOTypes.DestinationEscrow storage escrow = destinationEscrows[orderId][index];
-            require(
-                escrow.status == IOTypes.escrowStatus.CREATED ||
-                escrow.status == IOTypes.escrowStatus.EXPIRED,
-                "Not withdrawable"
-            );
-            require(msg.sender == escrow.receiver, "Only receiver can withdraw");
-
-            escrow.status = IOTypes.escrowStatus.WITHDRAWN;
-
-            bool success = IERC20(escrow.destinationToken).transfer(msg.sender, escrow.fillAmount);
-            require(success, "Transfer failed");
-
-            emit DestinationEscrowWithdrawn(orderId, msg.sender, escrow.fillAmount);
+        //Emit some event here
         }
-    }
-
 }
+
+

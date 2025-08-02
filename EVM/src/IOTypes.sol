@@ -30,7 +30,7 @@ library IOTypes {
     struct SourceEscrow {
         bytes32 taker;
         uint256 fillAmount;
-        uint256 status; //Change Type to ENum
+        escrowStatus status;
         uint256 timelock;
     }
 
@@ -40,6 +40,6 @@ library IOTypes {
         address receiver;
         uint256 destinationToken;
         uint256 fillAmount;
-        bool status;
+        escrowStatus status;
     }
 }
