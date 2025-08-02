@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 6, "column": 0}, "map": {"version":3,"sources":[],"names":[],"mappings":"","debugId":null}},
-    {"offset": {"line": 18, "column": 0}, "map": {"version":3,"sources":["file:///Users/shahnawazakhtar/Desktop/ui/src/app/resolve/page.tsx"],"sourcesContent":["\n\nexport default function ResolvePage() {\n  return (\n    <div className=\"pt-20\">\n      This is the Resolve page.\n    </div>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEe,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;kBAAQ;;;;;;AAI3B","debugId":null}}]
-}
