@@ -13,14 +13,11 @@
 #[ink::contract]
 pub mod escrow_factory {
     use ink::storage::Mapping;
-
     use ink::storage::traits::Packed;
-    use scale::{Encode, Decode};
-    use ink_storage::{collections::HashMap};
+    use ink_prelude::collections::HashMap;
 
 
-    #[derive(Debug, Clone, Encode, Decode, ink_storage_derive::PackedLayout, ink_storage_derive::SpreadLayout)]
-    #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
+    #[ink::storage_item]
     pub struct Order {
         maker: [u8; 32],            
         receiver: [u8; 32],
@@ -34,7 +31,6 @@ pub mod escrow_factory {
     #[derive(Default)]
     pub struct EscrowFactory {
         orders: HashMap<[u8; 32], Order>,
-
     }
 
     impl EscrowFactory {
@@ -42,7 +38,6 @@ pub mod escrow_factory {
         #[ink(constructor)]
         pub fn new() -> Self {
             let orders = HashMap::new();
-
             Self {orders: orders}
         }
 
