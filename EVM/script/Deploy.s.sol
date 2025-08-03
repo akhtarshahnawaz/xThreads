@@ -4,9 +4,11 @@ pragma solidity ^0.8.20;
 import "../lib/forge-std/src/Script.sol";
 import "../src/EscrowFactory.sol"; // Adjust path if needed
 
-contract DeployEscrowFactory is Script {
+contract Deploy is Script {
     function run() external {
 
+        // Start broadcasting (private key is provided via CLI flag)
+        vm.startBroadcast();
 
         // Current block timestamp
         uint256 nowTimestamp = block.timestamp;
@@ -19,8 +21,11 @@ contract DeployEscrowFactory is Script {
         // Define security deposit in wei (e.g., 0.01 ETH)
         uint256 securityDeposit = 0.01 ether;
 
+        // Use tx.origin (or calculate the deployer's address from private key)
+        address deployerAddress = msg.sender;
+
         // Deploy EscrowFactory with msg.sender as the owner
-        EscrowFactory escrowFactory = new EscrowFactory(msg.sender, privateTime, publicTime, expiryTime, securityDeposit);
+        EscrowFactory escrowFactory = new EscrowFactory(deployerAddress, privateTime, publicTime, expiryTime, securityDeposit);
 
         console.log("EscrowFactory deployed at:", address(escrowFactory));
 
