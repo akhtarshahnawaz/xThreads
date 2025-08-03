@@ -1,14 +1,34 @@
+
 #!/bin/bash
-set -e
 
+# Load environment variables from .env
+set -a
+source .env
+set +a
 
-PRIVATE_KEY='0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80'
-RPC_URL='127.0.0.1:8545'
+# Settings
+RPC_URL="http://localhost:8545" #"https://polygon-amoy.gateway.tenderly.co"
+SCRIPT_PATH="script/Deploy.s.sol"
+CHAIN_ID=137
 
-forge script script/Deploy.s.sol:Deploy \
+# Run the deployment
+forge script $SCRIPT_PATH \
+  -vvvv \
   --rpc-url $RPC_URL \
+  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
   --broadcast \
-  --private-key $PRIVATE_KEY
+  --ffi \
+  --chain-id $CHAIN_ID \
+  
+  
+# Extract deployment addresses from latest deployment
+jq '[.transactions[] | {key: .contractName, value: .contractAddress}] | from_entries' "broadcast/Deploy.s.sol/$CHAIN_ID/run-latest.json" > deployments.json
+
+
+# Block Explorer: https://mumbai.polygonscan.com
+# Address:     0x04eF6F1C3A58318DB4A4496116DA546b37d68E44
+# Private key: 0x39f56313f6fb26253d3ac9674f65a3ec89a0ef240b94e1250924efb12df63a9e
+
 
 
 
