@@ -16,24 +16,24 @@ pub mod escrow_factory {
 
     use ink::storage::traits::Packed;
     use scale::{Encode, Decode};
+    use ink_storage::{collections::HashMap};
 
-    use scale::{Encode, Decode};
-    use ink::storage::traits::Packed;
 
-    #[derive(Debug, Clone, Encode, Decode, Packed)]
+    #[derive(Debug, Clone, Encode, Decode, ink_storage_derive::PackedLayout, ink_storage_derive::SpreadLayout)]
     #[cfg_attr(feature = "std", derive(scale_info::TypeInfo))]
     pub struct Order {
-    pub amount: u128,
-    pub owner: AccountId,
-    pub is_filled: bool,
-}
+        maker: [u8; 32],            
+        receiver: [u8; 32],
+        sourceToken: [u8; 32],
+        destinationToken: [u8; 32],
+    }
 
 
     /// This is the contract's storage.
     #[ink(storage)]
     #[derive(Default)]
     pub struct EscrowFactory {
-        orders: Mapping<[u8; 32], Order>,
+        orders: HashMap<[u8; 32], Order>,
 
     }
 
@@ -41,7 +41,8 @@ pub mod escrow_factory {
         /// A constructor that the contract can be initialized with.
         #[ink(constructor)]
         pub fn new() -> Self {
-            let orders = Mapping::new();
+            let orders = HashMap::new();
+
             Self {orders: orders}
         }
 
