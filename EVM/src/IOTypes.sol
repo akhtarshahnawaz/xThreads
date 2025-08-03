@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library IOTypes {
     enum Chains {POL, DOT}
-    enum escrowStatus {CREATED, FILLED}
+    enum escrowStatus {CREATED, FILLED, WITHDRAWN}
 
     struct Order {
         bytes32 maker;
@@ -20,11 +20,14 @@ library IOTypes {
     }
 
     struct OrderComplement {
+        bytes32 orderId;
+        bytes32 taker;
         bytes32 receiver;
         bytes32 destinationToken;
         uint256 fillAmount;
-        bytes32 hashlock;
         uint256 timelock;
+        bytes32 hashlock;
+        IOTypes.Chains destinationChain;
     }
 
     struct SourceEscrow {
@@ -35,11 +38,12 @@ library IOTypes {
     }
 
     struct DestinationEscrow {
-        bytes32 orderId;
-        address taker;
-        address receiver;
-        uint256 destinationToken;
+        bytes32 taker;
+        bytes32 receiver;
+        bytes32 destinationToken;
         uint256 fillAmount;
+        bytes32 hashlock;
+        uint256 timelock;
         escrowStatus status;
     }
 }
