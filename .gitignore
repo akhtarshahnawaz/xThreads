@@ -5,6 +5,10 @@ escrow-sdk/node_modules/*
 Polkadot/escrow/target/*
 !Polkadot/escrow/target/.gitkeep
 
+Polkadot/ink-node-mac/*
+!Polkadot/ink-node-mac/.gitkeep
+
+
 EVM/cache/*
 !EVM/cache/.gitkeep
 
