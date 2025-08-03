@@ -1,12 +1,19 @@
-.DS_Store
-.gitignore
+# Ignore everything inside the following folders, but not the folders themselves
+escrow-sdk/node_modules/*
+!escrow-sdk/node_modules/.gitkeep
 
-# Ignore secrets folder
-/secrets/
+Polkadot/escrow/target/*
+!Polkadot/escrow/target/.gitkeep
 
-# Ignore frontend dependencies
-/frontend/node_modules/
+EVM/cache/*
+!EVM/cache/.gitkeep
 
-# Ignore parachain build artifacts
-/parachain-template/target/
+EVM/broadcast/*
+!EVM/broadcast/.gitkeep
+
+EVM/out/*
+!EVM/out/.gitkeep
+
+# Ignore all .DS_Store files anywhere
+**/.DS_Store
 
